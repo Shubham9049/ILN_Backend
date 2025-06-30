@@ -1,0 +1,38 @@
+{
+  "name": "iln",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "nodemon index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BigwigMediaAI/CFT"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BigwigMediaAI/CFT/issues"
+  },
+  "homepage": "https://github.com/BigwigMediaAI/CFT#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.14.3",
+    "multer": "^2.0.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^4.0.5",
+    "nodemailer": "^7.0.3",
+    "nodemon": "^3.1.10",
+    "openai": "^5.1.0",
+    "twilio": "^5.7.0"
+  }
+}
