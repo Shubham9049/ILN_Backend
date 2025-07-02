@@ -23,6 +23,19 @@ exports.getAllNews = async (req, res) => {
   }
 };
 
+// Update News
+exports.updateNews = async (req, res) => {
+  try {
+    const updated = await Newsfeed.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!updated) return res.status(404).json({ error: "News not found" });
+    res.status(200).json(updated);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update news item" });
+  }
+};
+
 // Delete News
 exports.deleteNews = async (req, res) => {
   try {

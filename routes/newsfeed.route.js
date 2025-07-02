@@ -9,6 +9,8 @@ router.post("/", newsfeedController.createNews);
 // Read All
 router.get("/", newsfeedController.getAllNews);
 
+router.put("/:id", newsfeedController.updateNews);
+
 // Delete
 router.delete("/:id", newsfeedController.deleteNews);
 
