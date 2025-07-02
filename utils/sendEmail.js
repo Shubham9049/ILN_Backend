@@ -16,7 +16,7 @@ const sendEmail = async ({ to, subject, text, html, attachments }) => {
     });
 
     const mailOptions = {
-      from: `"Close Friends Traders" <support@closefriendstraders.com>`,
+      from: `"Bigwig" <shubham@bigwigmedia.in>`,
       to,
       subject,
       text,
