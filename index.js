@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth.routes");
 // const ChatBot = require("./routes/enquiry.routes");
 const BlogRoute = require("./routes/blog.routes");
 const OfferROutes = require("./routes/offer.Routes");
+const newsfeedRoutes = require("./routes/newsfeed.route");
 
 require("dotenv").config();
 
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes);
 // app.use("/api/enquiry", ChatBot);
 app.use("/api/blogs", BlogRoute);
 app.use("/api/offer", OfferROutes);
+app.use("/api/newsfeed", newsfeedRoutes);
 
 app.get("/", (req, res) => {
   res.send("API LIVE");
