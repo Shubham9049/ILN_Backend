@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const Member = require("../models/member.model");
 const sendEmail = require("../utils/sendEmail");
+const bcrypt = require("bcrypt"); // Add this at the top
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = "your_secret_key"; // Store in .env
 
 // Utility: Generate random 8-char password
 const generatePassword = () => {
@@ -25,6 +28,46 @@ router.post("/", async (req, res) => {
     res
       .status(500)
       .json({ error: "Something went wrong.", details: err.message });
+  }
+});
+
+// POST: Login route
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const member = await Member.findOne({ email });
+
+    if (!member) {
+      return res.status(404).json({ error: "Member not found." });
+    }
+
+    if (member.status !== "Approved") {
+      return res
+        .status(403)
+        .json({ error: "Your account is not approved yet." });
+    }
+
+    const isMatch = await bcrypt.compare(password, member.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid email or password." });
+    }
+
+    const token = jwt.sign({ userId: member._id }, JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        email: member.email,
+        name: member.contactName,
+        status: member.status,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Login failed", details: err.message });
   }
 });
 
@@ -52,8 +95,10 @@ router.put("/status/:id", async (req, res) => {
       }
 
       const randomPassword = generatePassword();
+      const hashedPassword = await bcrypt.hash(randomPassword, 10); // Hash password
+
       member.status = "Approved";
-      member.password = randomPassword;
+      member.password = hashedPassword;
       await member.save();
 
       await sendEmail({
@@ -91,7 +136,6 @@ router.put("/status/:id", async (req, res) => {
         .status(200)
         .json({ message: "Member rejected, password cleared, and notified." });
     }
-    member.email = "";
   } catch (err) {
     res.status(500).json({
       error: "Failed to update status",
@@ -149,6 +193,7 @@ router.post("/verify-otp", async (req, res) => {
   try {
     const member = await Member.findOne({ email });
     if (!member) return res.status(404).json({ error: "Member not found" });
+
     if (member.status === "Rejected") {
       return res
         .status(403)
@@ -166,9 +211,14 @@ router.post("/verify-otp", async (req, res) => {
       return res.status(400).json({ error: "Invalid or expired OTP." });
     }
 
-    member.password = newPassword;
+    // 🔐 Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    member.password = hashedPassword;
+
+    // Clear OTP and expiry
     member.otp = undefined;
     member.otpExpiry = undefined;
+
     await member.save();
 
     res.status(200).json({ message: "Password updated successfully!" });
@@ -178,7 +228,6 @@ router.post("/verify-otp", async (req, res) => {
       .json({ error: "Failed to reset password", details: err.message });
   }
 });
-
 // GET: Get all members
 router.get("/", async (req, res) => {
   try {
