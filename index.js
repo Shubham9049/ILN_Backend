@@ -9,6 +9,7 @@ const BlogRoute = require("./routes/blog.routes");
 const OfferROutes = require("./routes/offer.Routes");
 const newsfeedRoutes = require("./routes/newsfeed.route");
 const memberRoutes = require("./routes/member.route");
+const agmroutes = require("./routes/agm.route");
 
 require("dotenv").config();
 
@@ -26,6 +27,7 @@ app.use("/api/blogs", BlogRoute);
 app.use("/api/offer", OfferROutes);
 app.use("/api/newsfeed", newsfeedRoutes);
 app.use("/api/members", memberRoutes);
+app.use("/agm", agmroutes);
 
 app.get("/", (req, res) => {
   res.send("API LIVE");
