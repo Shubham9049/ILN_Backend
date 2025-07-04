@@ -2,8 +2,7 @@ const Offer = require("../models/Offer.model"); // make sure you’ve created mo
 
 exports.newOffer = async (req, res) => {
   try {
-    const { title, subtitle, ctaLabel, ctaLink, startDate, endDate, isActive } =
-      req.body;
+    const { title, subtitle, ctaLabel, ctaLink, startDate, endDate } = req.body;
 
     const bannerImage = req.files?.bannerImage?.[0]?.path;
     const popupImage = req.files?.popupImage?.[0]?.path || null;
@@ -24,7 +23,6 @@ exports.newOffer = async (req, res) => {
       ctaLink,
       startDate: new Date(startDate),
       endDate: endDate ? new Date(endDate) : null,
-      isActive: isActive?.trim() === "true",
     });
 
     await offer.save();
@@ -40,7 +38,6 @@ exports.getOffer = async (req, res) => {
   try {
     const now = new Date();
     const offers = await Offer.find({
-      isActive: true,
       startDate: { $lte: now },
       $or: [{ endDate: null }, { endDate: { $gte: now } }],
     }).sort({ createdAt: -1 });
@@ -55,8 +52,7 @@ exports.getOffer = async (req, res) => {
 exports.OfferUpdate = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, subtitle, ctaLabel, ctaLink, startDate, endDate, isActive } =
-      req.body;
+    const { title, subtitle, ctaLabel, ctaLink, startDate, endDate } = req.body;
 
     const updateData = {
       title,
@@ -65,7 +61,6 @@ exports.OfferUpdate = async (req, res) => {
       ctaLink,
       startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null,
-      isActive: isActive === "true" || isActive === true,
     };
 
     if (req.files?.bannerImage?.[0]) {

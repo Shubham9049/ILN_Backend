@@ -11,7 +11,6 @@ const OfferSchema = new mongoose.Schema(
     ctaLink: { type: String },
     startDate: { type: Date, default: Date.now },
     endDate: { type: Date },
-    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
