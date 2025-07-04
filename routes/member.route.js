@@ -1,6 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const Member = require("../models/member.model");
+const sendEmail = require("../utils/sendEmail");
+
+// Utility: Generate random 8-char password
+const generatePassword = () => {
+  return Math.random().toString(36).slice(-8);
+};
+
+const generateOTP = () =>
+  Math.floor(100000 + Math.random() * 900000).toString();
 
 // POST: Create new member
 router.post("/", async (req, res) => {
@@ -16,6 +25,157 @@ router.post("/", async (req, res) => {
     res
       .status(500)
       .json({ error: "Something went wrong.", details: err.message });
+  }
+});
+
+// PUT: Admin approves or rejects a member
+router.put("/status/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status, reason } = req.body;
+
+  if (!["Approved", "Rejected"].includes(status)) {
+    return res.status(400).json({ error: "Invalid status." });
+  }
+
+  try {
+    const member = await Member.findById(id);
+    if (!member) {
+      return res.status(404).json({ error: "Member not found." });
+    }
+
+    // === Handle Approval ===
+    if (status === "Approved") {
+      if (member.status === "Approved") {
+        return res
+          .status(200)
+          .json({ message: "Member is already approved. No action taken." });
+      }
+
+      const randomPassword = generatePassword();
+      member.status = "Approved";
+      member.password = randomPassword;
+      await member.save();
+
+      await sendEmail({
+        to: member.email,
+        subject: "Membership Approved",
+        html: `
+          <h3>Congratulations ${member.contactName},</h3>
+          <p>Your membership has been <strong>approved</strong>.</p>
+          <p><strong>Login Email:</strong> ${member.email}</p>
+          <p><strong>Password:</strong> ${randomPassword}</p>
+          <p>Please log in and change your password after first login.</p>
+        `,
+      });
+
+      return res.status(200).json({ message: "Member approved and notified." });
+    }
+
+    // === Handle Rejection ===
+    if (status === "Rejected") {
+      member.status = "Rejected";
+      member.password = ""; // Clear password
+      await member.save();
+
+      await sendEmail({
+        to: member.email,
+        subject: "Membership Rejected",
+        html: `
+          <h3>Hello ${member.contactName},</h3>
+          <p>We regret to inform you that your membership has been <strong>rejected</strong>.</p>
+          <p><strong>Reason:</strong> ${reason || "Not specified"}</p>
+        `,
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Member rejected, password cleared, and notified." });
+    }
+    member.email = "";
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to update status",
+      details: err.message,
+    });
+  }
+});
+
+/**
+ * Step 1: Send OTP to email
+ */
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const member = await Member.findOne({ email });
+    if (!member) return res.status(404).json({ error: "Member not found" });
+
+    if (member.status === "Rejected") {
+      return res.status(403).json({
+        error: "Your account has been rejected. Password reset is not allowed.",
+      });
+    }
+
+    const otp = generateOTP();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins from now
+
+    member.otp = otp;
+    member.otpExpiry = expiry;
+    await member.save();
+
+    await sendEmail({
+      to: email,
+      subject: "Password Reset OTP",
+      html: `
+        <p>Hi ${member.contactName},</p>
+        <p>Your OTP for password reset is:</p>
+        <h2>${otp}</h2>
+        <p>This OTP will expire in 10 minutes.</p>
+      `,
+    });
+
+    res.status(200).json({ message: "OTP sent to email." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to send OTP", details: err.message });
+  }
+});
+
+/**
+ * Step 2: Verify OTP and set new password
+ */
+router.post("/verify-otp", async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  try {
+    const member = await Member.findOne({ email });
+    if (!member) return res.status(404).json({ error: "Member not found" });
+    if (member.status === "Rejected") {
+      return res
+        .status(403)
+        .json({
+          error:
+            "Your account has been rejected. You cannot set a new password.",
+        });
+    }
+
+    if (
+      member.otp !== otp ||
+      !member.otpExpiry ||
+      member.otpExpiry < new Date()
+    ) {
+      return res.status(400).json({ error: "Invalid or expired OTP." });
+    }
+
+    member.password = newPassword;
+    member.otp = undefined;
+    member.otpExpiry = undefined;
+    await member.save();
+
+    res.status(200).json({ message: "Password updated successfully!" });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: "Failed to reset password", details: err.message });
   }
 });
 

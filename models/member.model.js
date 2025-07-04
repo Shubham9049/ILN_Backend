@@ -61,6 +61,21 @@ const memberSchema = new mongoose.Schema(
     designation: {
       type: String,
     },
+    status: {
+      type: String,
+      enum: ["Approved", "Pending", "Rejected"],
+      default: "Pending",
+    },
+    password: {
+      type: String,
+      default: "",
+    },
+    otp: {
+      type: String,
+    },
+    otpExpiry: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
