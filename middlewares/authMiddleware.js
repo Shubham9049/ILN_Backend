@@ -1,8 +1,9 @@
+// middleware/authenticateAdmin.js
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const JWT_SECRET = "your_secret_key"; // Use process.env.JWT_SECRET in production
+const Admin = require("../models/admin.model");
+const JWT_SECRET = "your_secret_key"; // Use process.env.JWT_SECRET
 
-const authenticateUser = async (req, res, next) => {
+const authenticateAdmin = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -13,17 +14,15 @@ const authenticateUser = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.userId).select(
-      "contactPerson email"
-    );
+    const admin = await Admin.findById(decoded.id).select("email");
 
-    if (!user) return res.status(404).json({ error: "User not found." });
+    if (!admin) return res.status(404).json({ error: "Admin not found." });
 
-    req.user = user; // attach user to request
+    req.admin = admin;
     next();
   } catch (err) {
     res.status(401).json({ error: "Unauthorized. Token invalid." });
   }
 };
 
-module.exports = authenticateUser;
+module.exports = authenticateAdmin;
