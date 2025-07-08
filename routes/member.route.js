@@ -135,7 +135,7 @@ router.put("/status/:id", async (req, res) => {
         attachments: [
           {
             filename: "ILN_Membership_Guide.doc",
-            path: `${__dirname}/../assets/docs/ILN Membership Application Form.doc`, // adjust path as per your folder structure
+            path: `${__dirname}/../assets/docs/ILN.docx`, // adjust path as per your folder structure
           },
         ],
       });
