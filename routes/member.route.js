@@ -19,10 +19,28 @@ router.post("/", async (req, res) => {
   try {
     const newMember = new Member(req.body);
     await newMember.save();
+
+    // Send verification email
+    await sendEmail({
+      to: newMember.email,
+      subject: "Document Verification Required - ILN Membership",
+      html: `
+        <p>Hi ${newMember.name},</p>
+        <p>Thank you for registering with ILN.</p>
+        <p>To complete your membership, please provide the following documents:</p>
+        <ul>
+          <li>Government ID Proof (Aadhar/PAN/Passport)</li>
+          <li>Proof of Address</li>
+          <li>Recent Passport Size Photograph</li>
+        </ul>
+        <p>You can submit the documents by replying to this email.</p>
+        <p>Regards,<br/>ILN Team</p>
+      `,
+    });
+
     res.status(201).json({ message: "Member registered successfully!" });
   } catch (err) {
     if (err.code === 11000) {
-      // Duplicate email
       return res.status(409).json({ error: "Email already exists." });
     }
     res
@@ -30,6 +48,8 @@ router.post("/", async (req, res) => {
       .json({ error: "Something went wrong.", details: err.message });
   }
 });
+
+module.exports = router;
 
 // POST: Login route
 router.post("/login", async (req, res) => {
@@ -109,8 +129,15 @@ router.put("/status/:id", async (req, res) => {
           <p>Your membership has been <strong>approved</strong>.</p>
           <p><strong>Login Email:</strong> ${member.email}</p>
           <p><strong>Password:</strong> ${randomPassword}</p>
-          <p>Please log in and change your password after first login.</p>
+          <p>Please log in with this password or you can change it </p>
+          <p>We've attached a PDF guide to help you get started with your membership.</p>
         `,
+        attachments: [
+          {
+            filename: "ILN_Membership_Guide.doc",
+            path: `${__dirname}/../assets/docs/ILN Membership Application Form.doc`, // adjust path as per your folder structure
+          },
+        ],
       });
 
       return res.status(200).json({ message: "Member approved and notified." });
@@ -195,12 +222,9 @@ router.post("/verify-otp", async (req, res) => {
     if (!member) return res.status(404).json({ error: "Member not found" });
 
     if (member.status === "Rejected") {
-      return res
-        .status(403)
-        .json({
-          error:
-            "Your account has been rejected. You cannot set a new password.",
-        });
+      return res.status(403).json({
+        error: "Your account has been rejected. You cannot set a new password.",
+      });
     }
 
     if (
