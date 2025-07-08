@@ -25,7 +25,7 @@ router.post("/", async (req, res) => {
       to: newMember.email,
       subject: "Document Verification Required - ILN Membership",
       html: `
-        <p>Hi ${newMember.name},</p>
+        <p>Hi ${newMember.contactName},</p>
         <p>Thank you for registering with ILN.</p>
         <p>To complete your membership, please provide the following documents:</p>
         <ul>
