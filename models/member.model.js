@@ -47,6 +47,10 @@ const memberSchema = new mongoose.Schema(
       lowercase: true,
       unique: true,
     },
+    memberId: {
+      type: String,
+      unique: true,
+    },
     businessVerticals: {
       type: [String], // Array of verticals like ['Logistics', 'Freight']
       default: [],

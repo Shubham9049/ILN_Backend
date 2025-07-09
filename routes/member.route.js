@@ -5,6 +5,7 @@ const sendEmail = require("../utils/sendEmail");
 const bcrypt = require("bcrypt"); // Add this at the top
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = "your_secret_key"; // Store in .env
+const countryMap = require("../countryMap.json");
 
 // Utility: Generate random 8-char password
 const generatePassword = () => {
@@ -114,11 +115,19 @@ router.put("/status/:id", async (req, res) => {
           .json({ message: "Member is already approved. No action taken." });
       }
 
+      // ✅ Generate Member ID
+      const country = member.country?.toLowerCase().trim();
+      const countryCode = countryMap[country] || "XX"; // fallback if not found
+      const randomNumber = Math.floor(100000 + Math.random() * 900000);
+      const year = new Date().getFullYear();
+      const memberId = `${countryCode}${randomNumber}${year}`;
+
       const randomPassword = generatePassword();
       const hashedPassword = await bcrypt.hash(randomPassword, 10); // Hash password
 
       member.status = "Approved";
       member.password = hashedPassword;
+      member.memberId = memberId;
       await member.save();
 
       await sendEmail({
@@ -127,6 +136,7 @@ router.put("/status/:id", async (req, res) => {
         html: `
           <h3>Congratulations ${member.contactName},</h3>
           <p>Your membership has been <strong>approved</strong>.</p>
+          <p><strong>Member ID:</strong> ${memberId}</p>
           <p><strong>Login Email:</strong> ${member.email}</p>
           <p><strong>Password:</strong> ${randomPassword}</p>
           <p>Please log in with this password or you can change it </p>
@@ -140,7 +150,9 @@ router.put("/status/:id", async (req, res) => {
         ],
       });
 
-      return res.status(200).json({ message: "Member approved and notified." });
+      return res
+        .status(200)
+        .json({ message: "Member approved and notified.", memberId });
     }
 
     // === Handle Rejection ===
