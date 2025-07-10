@@ -18,6 +18,15 @@ const generateOTP = () =>
 // POST: Create new member
 router.post("/", async (req, res) => {
   try {
+    const { email } = req.body;
+
+    // Check if email already exists
+    const existingMember = await Member.findOne({ email });
+    if (existingMember) {
+      return res.status(409).json({ error: "Email already exists." });
+    }
+
+    // Save new member
     const newMember = new Member(req.body);
     await newMember.save();
 
@@ -41,9 +50,7 @@ router.post("/", async (req, res) => {
 
     res.status(201).json({ message: "Member registered successfully!" });
   } catch (err) {
-    if (err.code === 11000) {
-      return res.status(409).json({ error: "Email already exists." });
-    }
+    console.log(err.message);
     res
       .status(500)
       .json({ error: "Something went wrong.", details: err.message });

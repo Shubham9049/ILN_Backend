@@ -49,7 +49,7 @@ const memberSchema = new mongoose.Schema(
     },
     memberId: {
       type: String,
-      unique: true,
+      default: "",
     },
     businessVerticals: {
       type: [String], // Array of verticals like ['Logistics', 'Freight']
