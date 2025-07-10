@@ -6,6 +6,10 @@ const bcrypt = require("bcrypt"); // Add this at the top
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = "your_secret_key"; // Store in .env
 const countryMap = require("../countryMap.json");
+const multer = require("multer");
+
+const storage = require("../config/storage");
+const upload = multer({ storage });
 
 // Utility: Generate random 8-char password
 const generatePassword = () => {
@@ -15,8 +19,7 @@ const generatePassword = () => {
 const generateOTP = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-// POST: Create new member
-router.post("/", async (req, res) => {
+router.post("/", upload.single("logo"), async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -26,8 +29,14 @@ router.post("/", async (req, res) => {
       return res.status(409).json({ error: "Email already exists." });
     }
 
+    // Add Cloudinary URL if logo uploaded
+    const memberData = {
+      ...req.body,
+      logoUrl: req.file ? req.file.path : "", // Cloudinary URL
+    };
+
     // Save new member
-    const newMember = new Member(req.body);
+    const newMember = new Member(memberData);
     await newMember.save();
 
     // Send verification email
@@ -48,16 +57,18 @@ router.post("/", async (req, res) => {
       `,
     });
 
-    res.status(201).json({ message: "Member registered successfully!" });
+    res.status(201).json({
+      message: "Member registered successfully!",
+      logoUrl: memberData.logoUrl,
+    });
   } catch (err) {
-    console.log(err.message);
-    res
-      .status(500)
-      .json({ error: "Something went wrong.", details: err.message });
+    console.error("Error creating member:", err.message);
+    res.status(500).json({
+      error: "Something went wrong.",
+      details: err.message,
+    });
   }
 });
-
-module.exports = router;
 
 // POST: Login route
 router.post("/login", async (req, res) => {
@@ -92,6 +103,7 @@ router.post("/login", async (req, res) => {
         email: member.email,
         name: member.contactName,
         status: member.status,
+        memberId: member.memberId,
       },
     });
   } catch (err) {
@@ -278,6 +290,28 @@ router.get("/", async (req, res) => {
     res.status(200).json(members);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch members." });
+  }
+});
+
+// GET all members (optionally only approved)
+router.get("/approvedMembers", async (req, res) => {
+  const members = await Member.find({ status: "Approved" }); // optional
+  res.json(members);
+});
+
+// GET /api/members/:id - Get individual member details
+router.get("/:id", async (req, res) => {
+  try {
+    const member = await Member.findById(req.params.id);
+
+    if (!member) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    res.json(member);
+  } catch (err) {
+    console.error("Error fetching member:", err.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

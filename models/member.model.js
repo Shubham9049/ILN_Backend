@@ -74,6 +74,13 @@ const memberSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    logoUrl: {
+      type: String,
+      default: "", // or default logo image URL
+    },
+    website: {
+      type: String,
+    },
     otp: {
       type: String,
     },
