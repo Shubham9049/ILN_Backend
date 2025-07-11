@@ -87,6 +87,16 @@ const memberSchema = new mongoose.Schema(
     otpExpiry: {
       type: Date,
     },
+    keyMembers: [
+      {
+        name: { type: String },
+        image: { type: String }, // Optional URL
+        phone: { type: String },
+        email: { type: String },
+        role: { type: String },
+        description: { type: String },
+      },
+    ],
   },
   { timestamps: true }
 );

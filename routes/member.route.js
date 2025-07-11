@@ -104,6 +104,8 @@ router.post("/login", async (req, res) => {
         name: member.contactName,
         status: member.status,
         memberId: member.memberId,
+        companyName: member.companyName,
+        logo: member.logoUrl,
       },
     });
   } catch (err) {
@@ -293,10 +295,21 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET all members (optionally only approved)
-router.get("/approvedMembers", async (req, res) => {
-  const members = await Member.find({ status: "Approved" }); // optional
-  res.json(members);
+// GET all approved members except the logged-in user
+router.get("/approvedMembers/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+
+    const members = await Member.find({
+      status: "Approved",
+      email: { $ne: email }, // exclude this email
+    });
+
+    res.json(members);
+  } catch (err) {
+    console.error("Error fetching approved members:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 // GET /api/members/:id - Get individual member details
@@ -314,5 +327,88 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// GET /api/members/:email - Get individual member details
+router.get("/profile/:email", async (req, res) => {
+  try {
+    const member = await Member.findOne({ email: req.params.email });
+
+    if (!member) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    res.json(member);
+  } catch (err) {
+    console.error("Error fetching member:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.put(
+  "/profile/:email",
+  upload.fields([{ name: "logo", maxCount: 1 }, { name: "memberImages" }]),
+  async (req, res) => {
+    try {
+      const email = req.params.email;
+      let updateData = {};
+
+      if (req.is("multipart/form-data")) {
+        updateData = { ...req.body };
+
+        if (req.files["logo"] && req.files["logo"][0]) {
+          updateData.logoUrl = req.files["logo"][0].path;
+        }
+
+        if (
+          updateData.keyMembers &&
+          typeof updateData.keyMembers === "string"
+        ) {
+          const keyMembers = JSON.parse(updateData.keyMembers);
+          const uploadedImages = req.files["memberImages"] || [];
+
+          const imageMap = {};
+          for (const file of uploadedImages) {
+            imageMap[file.originalname] = file.path;
+          }
+
+          const keyMembersWithImages = keyMembers.map((member) => {
+            // Remove temp _id to allow Mongoose to generate new ObjectId
+            if (
+              member._id &&
+              typeof member._id === "string" &&
+              member._id.startsWith("temp-")
+            ) {
+              delete member._id;
+            }
+
+            return {
+              ...member,
+              image: imageMap[member._id] || member.image || "",
+            };
+          });
+
+          updateData.keyMembers = keyMembersWithImages;
+        }
+      } else {
+        updateData = req.body;
+      }
+
+      const updatedMember = await Member.findOneAndUpdate(
+        { email },
+        { $set: updateData },
+        { new: true }
+      );
+
+      if (!updatedMember) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+      res.json(updatedMember);
+    } catch (err) {
+      console.error("Error updating member:", err);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
+);
 
 module.exports = router;
