@@ -21,40 +21,69 @@ const generateOTP = () =>
 
 router.post("/", upload.single("logo"), async (req, res) => {
   try {
-    const { email } = req.body;
+    const {
+      email, // company email
+      telephone, // company phone
+      contactName,
+      designation,
+      primaryContactEmail,
+      primaryContactPhone,
+      ...rest
+    } = req.body;
 
-    // Check if email already exists
+    // Check if company email already exists
     const existingMember = await Member.findOne({ email });
     if (existingMember) {
-      return res.status(409).json({ error: "Email already exists." });
+      return res.status(409).json({ error: "Company email already exists." });
     }
 
-    // Add Cloudinary URL if logo uploaded
+    // Create first key member entry
+    const keyMembers = [
+      {
+        name: contactName,
+        role: designation,
+        email: primaryContactEmail,
+        phone: primaryContactPhone,
+        image: "",
+        description: "",
+      },
+    ];
+
+    // Build member data
     const memberData = {
-      ...req.body,
-      logoUrl: req.file ? req.file.path : "", // Cloudinary URL
+      ...rest,
+      email,
+      telephone,
+      contactName,
+      designation,
+      primaryContactEmail,
+      primaryContactPhone,
+      keyMembers,
+      logoUrl: req.file ? req.file.path : "",
     };
 
-    // Save new member
     const newMember = new Member(memberData);
     await newMember.save();
 
     // Send verification email
     await sendEmail({
-      to: newMember.email,
-      subject: "Document Verification Required - ILN Membership",
+      to: email,
+      subject: "Thank You for Your Expression of Interest – ILN Membership",
       html: `
-        <p>Hi ${newMember.contactName},</p>
-        <p>Thank you for registering with ILN.</p>
-        <p>To complete your membership, please provide the following documents:</p>
-        <ul>
-          <li>Government ID Proof (Aadhar/PAN/Passport)</li>
-          <li>Proof of Address</li>
-          <li>Recent Passport Size Photograph</li>
-        </ul>
-        <p>You can submit the documents by replying to this email.</p>
-        <p>Regards,<br/>ILN Team</p>
+        <p>Hi ${contactName},</p>
+        <p>Thank you for expressing your interest in becoming a member of ILN. We’ve received your initial details and have begun reviewing your application.</p>
+        <p>To help us complete the next stage of the review, please find attached a follow-up form requesting additional information about your organisation. Once you’ve completed the form, kindly reply to this email with the updated document attached.</p>
+        
+        <p>If you have any questions in the meantime, feel free to reach out.</p>
+        <p>Kind Regards,<br/>The ILN Membership Team</p>
+        
       `,
+      attachments: [
+        {
+          filename: "ILN_Membership.doc",
+          path: `${__dirname}/../assets/docs/ILN_Membership_Application_Form.docx`, // adjust path as per your folder structure
+        },
+      ],
     });
 
     res.status(201).json({
@@ -153,22 +182,21 @@ router.put("/status/:id", async (req, res) => {
 
       await sendEmail({
         to: member.email,
-        subject: "Membership Approved",
+        subject:
+          "Welcome to Integrated Logistics Network (ILN) – Your Membership Has Been Approved",
         html: `
-          <h3>Congratulations ${member.contactName},</h3>
-          <p>Your membership has been <strong>approved</strong>.</p>
+          <h3>Hi ${member.contactName},</h3>
+          <p>Congratulations! Your membership application has been approved, and we’re thrilled to welcome you to the ILN community.</p>
+          <p>To get you started, please find your login details for the ILN Member Portal below:</p>
           <p><strong>Member ID:</strong> ${memberId}</p>
           <p><strong>Login Email:</strong> ${member.email}</p>
           <p><strong>Password:</strong> ${randomPassword}</p>
-          <p>Please log in with this password or you can change it </p>
-          <p>We've attached a PDF guide to help you get started with your membership.</p>
+          <a href="https://iln.vercel.app/Login"><strong>URL:</strong>https://iln.vercel.app/Login</p>
+          <p>We recommend logging in and updating your password at your earliest convenience. </p>
+          <p>If you have any questions or need support getting started, please don’t hesitate to reach out.</p>
+          <p>Kind Regards,</p>
+          <p>The ILN Membership Team</p>
         `,
-        attachments: [
-          {
-            filename: "ILN_Membership_Guide.doc",
-            path: `${__dirname}/../assets/docs/ILN.docx`, // adjust path as per your folder structure
-          },
-        ],
       });
 
       return res

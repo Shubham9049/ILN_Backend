@@ -65,6 +65,12 @@ const memberSchema = new mongoose.Schema(
     designation: {
       type: String,
     },
+    primaryContactEmail: {
+      type: String,
+    },
+    primaryContactPhone: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ["Approved", "Pending", "Rejected"],
