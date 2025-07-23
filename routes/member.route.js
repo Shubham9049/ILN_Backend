@@ -191,7 +191,7 @@ router.put("/status/:id", async (req, res) => {
           <p><strong>Member ID:</strong> ${memberId}</p>
           <p><strong>Login Email:</strong> ${member.email}</p>
           <p><strong>Password:</strong> ${randomPassword}</p>
-          <a href="https://iln.vercel.app/Login"><strong>URL:</strong>https://iln.vercel.app/Login</p>
+          <p><strong>URL:</strong><a href="https://iln.vercel.app/Login">https://iln.vercel.app/Login</p>
           <p>We recommend logging in and updating your password at your earliest convenience. </p>
           <p>If you have any questions or need support getting started, please don’t hesitate to reach out.</p>
           <p>Kind Regards,</p>
