@@ -32,16 +32,17 @@ router.post("/subscribe", async (req, res) => {
     // Send confirmation email
     await sendEmail({
       to: email,
-      subject: "🎉 You are subscribed to our Newsletter",
+      subject:
+        "Welcome to the ILN Newsletter! Your Gateway to Logistics Insights.",
       text: "Thank you for subscribing",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2>✅ Subscription Confirmed</h2>
-          <p>Hi there,</p>
-          <p>Thank you for subscribing to our newsletter We'll keep you updated with the latest news, offers, and insights.</p>
-          <hr style="margin: 20px 0;" />
-          <p style="font-size: 14px; color: #888;">If you didn’t subscribe, please ignore this email.</p>
-          <p>Best regards,<br>The Team</p>
+          
+          <p>We are thrilled to welcome you to the Integrated Logistics Network (ILN) Newsletter!</p>
+          <p>Get ready to stay informed with valuable insights, breaking news and key trends shaping the logistics industry, delivered right to your inbox.</p>
+          
+          <p>Whether you are a long-time professional or just exploring the field, our goal is to provide the content that helps you navigate the complexities of the modern logistics,</p>
+          <p>Thank you for joining us!<br>The Integrated Logistics Network Team</p>
         </div>
       `,
     });
