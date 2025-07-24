@@ -16,7 +16,7 @@ const sendEmail = async ({ to, subject, text, html, attachments }) => {
     });
 
     const mailOptions = {
-      from: `"Bigwig" <shubham@bigwigmedia.in>`,
+      from: `"ILN" <info@integratedlognet.com>`,
       to,
       subject,
       text,

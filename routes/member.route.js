@@ -81,7 +81,7 @@ router.post("/", upload.single("logo"), async (req, res) => {
       attachments: [
         {
           filename: "ILN_Membership.doc",
-          path: `${__dirname}/../assets/docs/ILN_Membership_Application_Form.docx`, // adjust path as per your folder structure
+          path: `${__dirname}/../assets/docs/ILN.docx`,
         },
       ],
     });
